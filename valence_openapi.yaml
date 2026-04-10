@@ -1,16 +1,17 @@
 openapi: 3.0.3
 info:
-  title: Brightspace Valence API Starter Spec
-  version: 0.1.0
+  title: Brightspace Valence API Expanded Starter Spec
+  version: 0.2.0
   description: |
-    Starter OpenAPI document assembled from the Brightspace Valence routing table and linked resource pages.
-    It focuses on routes where the docs explicitly describe POST/PUT request bodies.
+    Expanded starter OpenAPI document assembled from the Brightspace Valence routing table and linked resource pages.
+    This version emphasizes operations where the docs explicitly describe request bodies, including JSON and select
+    application/x-www-form-urlencoded posts.
 
     Notes:
-    - Paths preserve the documentation placeholders like (version) and (orgUnitId) as OpenAPI path params.
-    - Many Brightspace models inherit from broader base objects in the docs; where the base object was not fully captured here,
-      this starter spec keeps the schema intentionally permissive.
-    - Several documented actions use query/form/multipart inputs instead of JSON bodies; those are omitted or simplified.
+    - This is still a starter spec, not a complete Valence contract.
+    - Where docs clearly name a body type but do not fully restate every nested field in the same section,
+      schemas are intentionally permissive.
+    - Some routes use uploads, multipart flows, or query-only inputs and are omitted or simplified.
 servers:
   - url: https://{host}
     variables:
@@ -30,6 +31,7 @@ paths:
       responses:
         '200':
           description: Supported version response
+
   /d2l/api/bas/{version}/awards/:
     post:
       summary: Create a new award
@@ -45,6 +47,7 @@ paths:
       responses:
         '200':
           description: Award created
+
   /d2l/api/bas/{version}/awards/{awardId}:
     put:
       summary: Update an award
@@ -61,6 +64,7 @@ paths:
       responses:
         '200':
           description: Award updated
+
   /d2l/api/bas/{version}/library/icons/:
     post:
       summary: Add an icon to the library
@@ -76,6 +80,7 @@ paths:
       responses:
         '200':
           description: Icon added
+
   /d2l/api/bas/{version}/library/templates/:
     post:
       summary: Add a certificate template to the library
@@ -91,6 +96,7 @@ paths:
       responses:
         '200':
           description: Template added
+
   /d2l/api/bas/{version}/orgunits/{orgUnitId}/associations/:
     post:
       summary: Associate an award with an org unit
@@ -107,6 +113,7 @@ paths:
       responses:
         '200':
           description: Association created
+
   /d2l/api/bas/{version}/orgunits/{orgUnitId}/associations/{associationId}:
     put:
       summary: Update an award association for an org unit
@@ -124,6 +131,45 @@ paths:
       responses:
         '200':
           description: Association updated
+
+  /d2l/api/bas/{version}/orgunits/{orgUnitId}/issued/:
+    post:
+      summary: Issue an award to a user
+      operationId: createIssuedAward
+      parameters:
+        - $ref: '#/components/parameters/version'
+        - $ref: '#/components/parameters/orgUnitId'
+        - name: useIssueDateToCalcExpiry
+          in: query
+          schema:
+            type: boolean
+          description: Use issue date to calculate expiry date; default true.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssuedAwardCreate'
+      responses:
+        '200':
+          description: Issued award created
+
+  /d2l/api/eP/{version}/artifacts/file/new:
+    post:
+      summary: Create a new file artifact
+      operationId: createEpFileArtifact
+      parameters:
+        - $ref: '#/components/parameters/version'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EpFileArtifact'
+      responses:
+        '200':
+          description: File artifact created
+
   /d2l/api/eP/{version}/artifact/file/{objectId}:
     post:
       summary: Update an existing file artifact
@@ -140,6 +186,7 @@ paths:
       responses:
         '200':
           description: File artifact updated
+
   /d2l/api/eP/{version}/artifacts/link/new:
     post:
       summary: Create a new link artifact
@@ -155,6 +202,7 @@ paths:
       responses:
         '200':
           description: Link artifact created
+
   /d2l/api/eP/{version}/artifact/link/{objectId}:
     post:
       summary: Update an existing link artifact
@@ -171,6 +219,23 @@ paths:
       responses:
         '200':
           description: Link artifact updated
+
+  /d2l/api/eP/{version}/collections/new:
+    post:
+      summary: Create a new collection
+      operationId: createEpCollection
+      parameters:
+        - $ref: '#/components/parameters/version'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EpCollection'
+      responses:
+        '200':
+          description: Collection created
+
   /d2l/api/eP/{version}/collection/{objectId}:
     post:
       summary: Update an existing collection
@@ -187,21 +252,7 @@ paths:
       responses:
         '200':
           description: Collection updated
-  /d2l/api/eP/{version}/collections/new:
-    post:
-      summary: Create a new collection
-      operationId: createEpCollection
-      parameters:
-        - $ref: '#/components/parameters/version'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EpCollection'
-      responses:
-        '200':
-          description: Collection created
+
   /d2l/api/eP/{version}/export/new:
     post:
       summary: Start a new export for selected ePortfolio object IDs
@@ -224,6 +275,7 @@ paths:
       responses:
         '200':
           description: Export task created
+
   /d2l/api/eP/{version}/learningobjective/{objectiveId}:
     post:
       summary: Update an existing learning objective
@@ -245,9 +297,33 @@ paths:
       responses:
         '200':
           description: Learning objective updated
+
+  /d2l/api/eP/{version}/object/comments/new:
+    post:
+      summary: Create a new comment using a context chain
+      operationId: createEpContextComment
+      parameters:
+        - $ref: '#/components/parameters/version'
+        - name: context
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Context chain of object IDs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+              description: Raw comment text.
+      responses:
+        '200':
+          description: Comment created; returns the new CommentId
+
   /d2l/api/eP/{version}/object/{objectId}/comments/new:
     post:
-      summary: Add a comment to an ePortfolio object
+      summary: Create a new comment on an ePortfolio object
       operationId: createEpObjectComment
       parameters:
         - $ref: '#/components/parameters/version'
@@ -257,13 +333,49 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EpComment'
+              type: string
+              description: Raw comment text.
       responses:
         '200':
-          description: Comment created
+          description: Comment created; returns the new CommentId
+
+  /d2l/api/eP/{version}/object/{objectId}/share/new:
+    post:
+      summary: Share an ePortfolio object to a sharing profile
+      operationId: shareEpObject
+      parameters:
+        - $ref: '#/components/parameters/version'
+        - $ref: '#/components/parameters/objectId'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EpShareForm'
+      responses:
+        '200':
+          description: Object shared
+
+  /d2l/api/eP/{version}/object/{objectId}/share/delete:
+    post:
+      summary: Unshare an ePortfolio object from a sharing profile
+      operationId: unshareEpObject
+      parameters:
+        - $ref: '#/components/parameters/version'
+        - $ref: '#/components/parameters/objectId'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EpShareForm'
+      responses:
+        '200':
+          description: Object unshared
+
   /d2l/api/eP/{version}/object/{objectId}/tags/add:
     post:
-      summary: Add tags to an ePortfolio object
+      summary: Add one or more tags to an ePortfolio object
       operationId: addEpObjectTags
       parameters:
         - $ref: '#/components/parameters/version'
@@ -279,9 +391,10 @@ paths:
       responses:
         '200':
           description: Tags added
+
   /d2l/api/eP/{version}/object/{objectId}/tags/remove:
     post:
-      summary: Remove tags from an ePortfolio object
+      summary: Remove one or more tags from an ePortfolio object
       operationId: removeEpObjectTags
       parameters:
         - $ref: '#/components/parameters/version'
@@ -297,9 +410,10 @@ paths:
       responses:
         '200':
           description: Tags removed
+
   /d2l/api/eP/{version}/objects/tags/add:
     post:
-      summary: Add tags to a set of ePortfolio objects
+      summary: Add one or more tags to a set of ePortfolio objects
       operationId: addEpTagsToObjects
       parameters:
         - $ref: '#/components/parameters/version'
@@ -308,7 +422,7 @@ paths:
           required: true
           schema:
             type: string
-          description: CSV list of EP object IDs
+          description: CSV list of EP object IDs.
       requestBody:
         required: true
         content:
@@ -320,9 +434,10 @@ paths:
       responses:
         '200':
           description: Tags added
+
   /d2l/api/eP/{version}/objects/tags/remove:
     post:
-      summary: Remove tags from a set of ePortfolio objects
+      summary: Remove one or more tags from a set of ePortfolio objects
       operationId: removeEpTagsFromObjects
       parameters:
         - $ref: '#/components/parameters/version'
@@ -331,7 +446,7 @@ paths:
           required: true
           schema:
             type: string
-          description: CSV list of EP object IDs
+          description: CSV list of EP object IDs.
       requestBody:
         required: true
         content:
@@ -343,9 +458,10 @@ paths:
       responses:
         '200':
           description: Tags removed
+
   /d2l/api/eP/{version}/tags/autocomplete:
     post:
-      summary: Match a tag template against known tags
+      summary: Match tags by prefix
       operationId: autocompleteEpTags
       parameters:
         - $ref: '#/components/parameters/version'
@@ -357,11 +473,12 @@ paths:
               $ref: '#/components/schemas/EpTagObject'
       responses:
         '200':
-          description: Tag matches returned
+          description: Matching tags returned
+
   /d2l/api/eP/{version}/ignoredusers/add:
     post:
-      summary: Add a user to the calling user's ignored list
-      operationId: addIgnoredUser
+      summary: Add a user to the ignored-user list
+      operationId: addIgnoredEpUser
       parameters:
         - $ref: '#/components/parameters/version'
       requestBody:
@@ -371,13 +488,15 @@ paths:
             schema:
               type: integer
               format: int64
+              description: Single user ID as a JSON number.
       responses:
         '200':
-          description: Ignored user added
+          description: User added to ignored list
+
   /d2l/api/eP/{version}/ignoredusers/remove:
     post:
-      summary: Remove a user from the calling user's ignored list
-      operationId: removeIgnoredUser
+      summary: Remove a user from the ignored-user list
+      operationId: removeIgnoredEpUser
       parameters:
         - $ref: '#/components/parameters/version'
       requestBody:
@@ -387,9 +506,27 @@ paths:
             schema:
               type: integer
               format: int64
+              description: Single user ID as a JSON number.
       responses:
         '200':
-          description: Ignored user removed
+          description: User removed from ignored list
+
+  /d2l/api/eP/{version}/presentations/new:
+    post:
+      summary: Create a new presentation
+      operationId: createEpPresentation
+      parameters:
+        - $ref: '#/components/parameters/version'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EpPresentation'
+      responses:
+        '200':
+          description: Presentation created
+
   /d2l/api/eP/{version}/presentation/{objectId}:
     post:
       summary: Update an existing presentation
@@ -406,10 +543,11 @@ paths:
       responses:
         '200':
           description: Presentation updated
-  /d2l/api/eP/{version}/presentations/new:
+
+  /d2l/api/eP/{version}/reflections/new:
     post:
-      summary: Create a new presentation
-      operationId: createEpPresentation
+      summary: Create a new reflection
+      operationId: createEpReflection
       parameters:
         - $ref: '#/components/parameters/version'
       requestBody:
@@ -417,10 +555,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EpPresentation'
+              $ref: '#/components/schemas/EpReflection'
       responses:
         '200':
-          description: Presentation created
+          description: Reflection created
+
   /d2l/api/eP/{version}/reflection/{objectId}:
     post:
       summary: Update an existing reflection
@@ -437,21 +576,7 @@ paths:
       responses:
         '200':
           description: Reflection updated
-  /d2l/api/eP/{version}/reflections/new:
-    post:
-      summary: Create a new reflection
-      operationId: createEpReflection
-      parameters:
-        - $ref: '#/components/parameters/version'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EpReflection'
-      responses:
-        '200':
-          description: Reflection created
+
   /d2l/api/le/{version}/{orgUnitId}/agents:
     post:
       summary: Create a new intelligent agent
@@ -464,35 +589,50 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/IntelligentAgentData'
+              $ref: '#/components/schemas/IntelligentAgent'
       responses:
         '200':
-          description: Agent created
+          description: Intelligent agent created
+
   /d2l/api/le/{version}/{orgUnitId}/agents/{agentId}:
     put:
-      summary: Update an existing intelligent agent
+      summary: Update an intelligent agent
       operationId: updateIntelligentAgent
       parameters:
         - $ref: '#/components/parameters/version'
         - $ref: '#/components/parameters/orgUnitId'
-        - name: agentId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+        - $ref: '#/components/parameters/agentId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/IntelligentAgentData'
+              $ref: '#/components/schemas/IntelligentAgent'
       responses:
         '200':
-          description: Agent updated
+          description: Intelligent agent updated
+
+  /d2l/api/le/{version}/{orgUnitId}/agents/{agentId}/runs:
+    post:
+      summary: Trigger an intelligent-agent run
+      operationId: runIntelligentAgent
+      parameters:
+        - $ref: '#/components/parameters/version'
+        - $ref: '#/components/parameters/orgUnitId'
+        - $ref: '#/components/parameters/agentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunNowData'
+      responses:
+        '200':
+          description: Agent run created
+
   /d2l/api/le/{version}/{orgUnitId}/agents/categories/:
     post:
-      summary: Create a new intelligent agent category
+      summary: Create a new intelligent-agent category
       operationId: createIntelligentAgentCategory
       parameters:
         - $ref: '#/components/parameters/version'
@@ -502,75 +642,29 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/IntelligentAgentCategoryData'
+              $ref: '#/components/schemas/IntelligentAgentCategory'
       responses:
         '200':
           description: Category created
+
   /d2l/api/le/{version}/{orgUnitId}/agents/categories/{categoryId}:
     put:
-      summary: Update an intelligent agent category
+      summary: Update an intelligent-agent category
       operationId: updateIntelligentAgentCategory
       parameters:
         - $ref: '#/components/parameters/version'
         - $ref: '#/components/parameters/orgUnitId'
-        - name: categoryId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+        - $ref: '#/components/parameters/categoryId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/IntelligentAgentCategoryData'
+              $ref: '#/components/schemas/IntelligentAgentCategory'
       responses:
         '200':
           description: Category updated
-  /d2l/api/le/{version}/ltiadvantage/links/organization/{linkId}:
-    put:
-      summary: Update an organization-level LTI Advantage link
-      operationId: updateOrgLtiAdvantageLink
-      parameters:
-        - $ref: '#/components/parameters/version'
-        - name: linkId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LtiCreateLinkData'
-      responses:
-        '200':
-          description: Link updated
-  /d2l/api/le/{version}/ltiadvantage/links/orgunit/{orgUnitId}/{linkId}:
-    put:
-      summary: Update an org unit-level LTI Advantage link
-      operationId: updateOrgUnitLtiAdvantageLink
-      parameters:
-        - $ref: '#/components/parameters/version'
-        - $ref: '#/components/parameters/orgUnitId'
-        - name: linkId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LtiCreateLinkData'
-      responses:
-        '200':
-          description: Link updated
+
 components:
   parameters:
     version:
@@ -579,16 +673,9 @@ components:
       required: true
       schema:
         type: string
-      description: Brightspace API version string.
+      description: D2L API version.
     orgUnitId:
       name: orgUnitId
-      in: path
-      required: true
-      schema:
-        type: integer
-        format: int64
-    objectId:
-      name: objectId
       in: path
       required: true
       schema:
@@ -608,47 +695,101 @@ components:
       schema:
         type: integer
         format: int64
+    objectId:
+      name: objectId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    agentId:
+      name: agentId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    categoryId:
+      name: categoryId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
   schemas:
     SupportedVersionRequest:
-      type: object
-      required: [ProductCode, Version]
-      properties:
-        ProductCode:
-          type: string
-        Version:
-          type: string
-    AwardExpiryCalculation:
-      type: object
-      additionalProperties: true
-      description: Placeholder for Awards.ExpiryCalculation.
-    AwardExpiryNotification:
-      type: object
-      additionalProperties: true
-      description: Placeholder for Awards.ExpiryNotification.
-    AwardInputFileInfo:
-      type: object
-      additionalProperties: true
-      description: Placeholder for Awards.InputFileInfo.
+      type: array
+      items:
+        type: object
+        required: [ProductCode, Version]
+        properties:
+          ProductCode:
+            type: string
+          Version:
+            type: string
+
     LibraryInputFileInfo:
       type: object
+      description: Input file reference used by awards library uploads.
       additionalProperties: true
-      description: Placeholder for Awards.LibraryInputFileInfo.
+      properties:
+        FileName:
+          type: string
+        MediaType:
+          type: string
+        Url:
+          type: string
+          format: uri
+
+    AwardExpiryCalculation:
+      type: object
+      properties:
+        Type:
+          type: integer
+        Day:
+          type: integer
+        Week:
+          type: integer
+        Month:
+          type: integer
+        Year:
+          type: integer
+        Hour:
+          type: integer
+        Minute:
+          type: integer
+
+    AwardExpiryNotification:
+      type: object
+      properties:
+        Type:
+          type: integer
+        Value:
+          type: integer
+          nullable: true
+
+    InputFileInfo:
+      type: object
+      additionalProperties: true
+      properties:
+        FileName:
+          type: string
+        Url:
+          type: string
+          format: uri
+        MediaType:
+          type: string
+
     AwardCreate:
       type: object
       required:
         - AwardType
         - Title
         - Description
-        - ExpiryCalculation
-        - ExpiryNotification
-        - IssuerName
-        - IssuerUrl
-        - IssuerContact
-        - Image
       properties:
         AwardType:
           type: integer
-          description: AWARD_T; badge=1, certificate=2 in the docs.
         Title:
           type: string
         Description:
@@ -665,39 +806,17 @@ components:
         IssuerContact:
           type: string
         Certificate:
-          oneOf:
-            - $ref: '#/components/schemas/AwardInputFileInfo'
-            - type: 'null'
+          $ref: '#/components/schemas/InputFileInfo'
         Image:
-          $ref: '#/components/schemas/AwardInputFileInfo'
+          $ref: '#/components/schemas/InputFileInfo'
         Criteria:
           type: string
           nullable: true
+
     AwardUpdate:
-      type: object
-      properties:
-        Title:
-          type: string
-        Description:
-          type: string
-        ExpiryCalculation:
-          $ref: '#/components/schemas/AwardExpiryCalculation'
-        ExpiryNotification:
-          $ref: '#/components/schemas/AwardExpiryNotification'
-        IssuerName:
-          type: string
-        IssuerUrl:
-          type: string
-          format: uri
-        IssuerContact:
-          type: string
-        Certificate:
-          $ref: '#/components/schemas/AwardInputFileInfo'
-        Image:
-          $ref: '#/components/schemas/AwardInputFileInfo'
-        Criteria:
-          type: string
-          nullable: true
+      allOf:
+        - $ref: '#/components/schemas/AwardCreate'
+
     AwardAssociationCreate:
       type: object
       required: [AwardId, HiddenAward]
@@ -707,21 +826,58 @@ components:
           format: int64
         Credit:
           type: number
-          format: double
           nullable: true
         HiddenAward:
           type: boolean
+
     AwardAssociationUpdate:
       type: object
       required: [HiddenAward]
       properties:
         Credit:
           type: number
-          format: double
           nullable: true
         HiddenAward:
           type: boolean
-    EpBaseObject:
+
+    IssuedAwardCreate:
+      type: object
+      required: [AwardId, IssuedToUserId, Criteria, Evidence]
+      properties:
+        AwardId:
+          type: integer
+          format: int64
+        IssuedToUserId:
+          type: integer
+          format: int64
+        Criteria:
+          type: string
+        Evidence:
+          type: string
+        IssuedDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    EpTagObject:
+      type: object
+      properties:
+        Text:
+          type: string
+        Type:
+          type: integer
+      additionalProperties: true
+
+    EpGeoTag:
+      type: object
+      properties:
+        Latitude:
+          type: number
+        Longitude:
+          type: number
+      additionalProperties: true
+
+    EpObject:
       type: object
       properties:
         ObjectId:
@@ -731,112 +887,109 @@ components:
           type: string
         Description:
           type: string
-        ObjectTypeId:
-          type: integer
-        OwnerId:
-          type: integer
-          format: int64
+        Tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/EpTagObject'
+        GeoTag:
+          $ref: '#/components/schemas/EpGeoTag'
+        AllowComments:
+          type: boolean
       additionalProperties: true
-      description: Permissive base for EP.EpObject-derived structures.
+
     EpFileArtifact:
       allOf:
-        - $ref: '#/components/schemas/EpBaseObject'
+        - $ref: '#/components/schemas/EpObject'
         - type: object
           properties:
             FileSize:
               type: integer
+              format: int64
             FileName:
               type: string
             Extension:
               type: string
             UploadKey:
               type: string
+
     EpUrlArtifact:
       allOf:
-        - $ref: '#/components/schemas/EpBaseObject'
+        - $ref: '#/components/schemas/EpObject'
         - type: object
           properties:
             Url:
               type: string
               format: uri
-          additionalProperties: true
+
     EpCollection:
       allOf:
-        - $ref: '#/components/schemas/EpBaseObject'
-        - type: object
-          properties:
-            ItemsCount:
-              type: integer
-            ItemIds:
-              type: array
-              items:
-                type: integer
-                format: int64
-            Items:
-              type: array
-              items:
-                $ref: '#/components/schemas/EpBaseObject'
+        - $ref: '#/components/schemas/EpObject'
+
     EpLearningObjective:
       allOf:
-        - $ref: '#/components/schemas/EpBaseObject'
-        - type: object
-          description: Learning objective derives from EP.EpObject with its own ObjectTypeId.
-    EpComment:
+        - $ref: '#/components/schemas/EpObject'
+
+    EpShareForm:
       type: object
+      required: [profileTargetId, profileType]
       properties:
-        ObjectId:
-          type: integer
-          format: int64
-        CommentId:
-          type: integer
-          format: int64
-        UserId:
-          type: integer
-          format: int64
-        CreatedDate:
+        profileTargetId:
           type: string
-          format: date-time
-          nullable: true
-        Body:
+        profileType:
           type: string
-    EpTagObject:
-      type: object
-      required: [Text, Type]
-      properties:
-        Text:
-          type: string
-        Type:
-          type: integer
+
     EpPresentation:
       allOf:
-        - $ref: '#/components/schemas/EpBaseObject'
+        - $ref: '#/components/schemas/EpObject'
         - type: object
           properties:
             BannerTitle:
               type: string
             BannerDescription:
               type: string
+
     EpReflection:
       allOf:
-        - $ref: '#/components/schemas/EpBaseObject'
+        - $ref: '#/components/schemas/EpObject'
         - type: object
-          description: Reflection derives from EP.EpObject; Description expects light HTML per docs.
-    IntelligentAgentDateCondition:
+          description: Reflection descriptions may contain light HTML markup.
+
+    IntelligentAgent:
       type: object
       properties:
-        Type:
-          type: integer
-        Days:
-          type: integer
-      additionalProperties: true
-    IntelligentAgentReleaseCondition:
-      type: object
-      properties:
-        ConditionSetId:
+        AgentId:
           type: integer
           format: int64
+          nullable: true
+        Name:
+          type: string
+        Description:
+          type: string
+        IsEnabled:
+          type: boolean
+        Schedule:
+          $ref: '#/components/schemas/IntelligentAgentSchedule'
+        Action:
+          $ref: '#/components/schemas/IntelligentAgentAction'
+        Condition:
+          $ref: '#/components/schemas/IntelligentAgentCondition'
+        LastRunDate:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        NextRunDate:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        CategoryId:
+          type: integer
+          format: int64
+          nullable: true
       additionalProperties: true
-    IntelligentAgentScheduleData:
+
+    IntelligentAgentSchedule:
       type: object
       properties:
         IsEnabled:
@@ -866,69 +1019,71 @@ components:
         RepeatsOnMonth:
           type: integer
           nullable: true
-    IntelligentAgentActionData:
-      type: object
-      additionalProperties: true
-      description: Placeholder for IntelligentAgents.ActionData.
-    IntelligentAgentConditionData:
+
+    IntelligentAgentAction:
       type: object
       properties:
-        LoginActivity:
-          oneOf:
-            - $ref: '#/components/schemas/IntelligentAgentDateCondition'
-            - type: 'null'
-        CourseActivity:
-          oneOf:
-            - $ref: '#/components/schemas/IntelligentAgentDateCondition'
-            - type: 'null'
-        ReleaseCondition:
-          oneOf:
-            - $ref: '#/components/schemas/IntelligentAgentReleaseCondition'
-            - type: 'null'
-        RoleIds:
-          type: array
-          nullable: true
-          items:
-            type: integer
-            format: int64
-    IntelligentAgentData:
-      type: object
-      properties:
-        AgentId:
+        RepeatType:
           type: integer
-          format: int64
-          nullable: true
-        Name:
-          type: string
-        Description:
-          type: string
+        EmailAction:
+          $ref: '#/components/schemas/IntelligentAgentEmailAction'
+        EnrollmentAction:
+          $ref: '#/components/schemas/IntelligentAgentEnrollmentAction'
+
+    IntelligentAgentEmailAction:
+      type: object
+      properties:
         IsEnabled:
           type: boolean
-        Schedule:
-          oneOf:
-            - $ref: '#/components/schemas/IntelligentAgentScheduleData'
-            - type: 'null'
-        Action:
-          oneOf:
-            - $ref: '#/components/schemas/IntelligentAgentActionData'
-            - type: 'null'
-        Condition:
-          oneOf:
-            - $ref: '#/components/schemas/IntelligentAgentConditionData'
-            - type: 'null'
-        LastRunDate:
+        To:
           type: string
-          format: date-time
           nullable: true
-        NextRunDate:
+        Cc:
           type: string
-          format: date-time
           nullable: true
-        CategoryId:
+        Bcc:
+          type: string
+          nullable: true
+        Subject:
+          type: string
+          nullable: true
+        Message:
+          type: string
+          nullable: true
+        IsHtml:
+          type: boolean
+
+    IntelligentAgentEnrollmentAction:
+      type: object
+      properties:
+        IsEnabled:
+          type: boolean
+        EnrollmentType:
+          type: integer
+          nullable: true
+        OrgUnitId:
           type: integer
           format: int64
           nullable: true
-    IntelligentAgentCategoryData:
+        RoleId:
+          type: integer
+          format: int64
+          nullable: true
+
+    IntelligentAgentCondition:
+      type: object
+      additionalProperties: true
+      description: ConditionData is nested and broad in the docs; kept permissive in this starter spec.
+
+    RunNowData:
+      type: object
+      properties:
+        RunType:
+          type: integer
+          description: 0 practice run, 1 full run.
+      additionalProperties: true
+
+    IntelligentAgentCategory:
       type: object
       properties:
         CategoryId:
@@ -937,8 +1092,6 @@ components:
           nullable: true
         Name:
           type: string
-      additionalProperties: true
-    LtiCreateLinkData:
-      type: object
-      additionalProperties: true
-      description: Placeholder for LTI.CreateLTIAdvantageLinkData.
+        SortOrder:
+          type: number
+          nullable: true
